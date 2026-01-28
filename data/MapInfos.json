@@ -1,0 +1,15 @@
+[
+null,
+{"id":1,"expanded":false,"name":"MAP001","order":9,"parentId":0,"scrollX":550.8,"scrollY":375},
+{"id":2,"expanded":true,"name":"First_Map","order":2,"parentId":0,"scrollX":810,"scrollY":858.5999999999999},
+{"id":3,"expanded":false,"name":"Second_Map","order":3,"parentId":2,"scrollX":688.8,"scrollY":293.4},
+null,
+{"id":5,"expanded":true,"name":"Tests","order":4,"parentId":0,"scrollX":511.2,"scrollY":303},
+{"id":6,"expanded":false,"name":"Battle","order":6,"parentId":5,"scrollX":511.2,"scrollY":321},
+{"id":7,"expanded":false,"name":"CharacterCustomize","order":1,"parentId":0,"scrollX":550.8,"scrollY":375},
+{"id":8,"expanded":false,"name":"Events_via_NetComments","order":5,"parentId":5,"scrollX":511.2,"scrollY":330.59999999999997},
+null,
+null,
+{"id":11,"expanded":false,"name":"SharedEvents","order":7,"parentId":5,"scrollX":493,"scrollY":424.5},
+{"id":12,"expanded":false,"name":"nAPI (script calls)","order":8,"parentId":5,"scrollX":918,"scrollY":625}
+]
