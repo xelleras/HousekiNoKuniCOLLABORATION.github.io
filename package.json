@@ -2,11 +2,11 @@
     "name": "",
     "main": "index.html",
     "js-flags": "--expose-gc",
-  "window": {
-    "title": "",
-    "toolbar": false,
-    "width": 816,
-    "height": 624,
-    "icon": "icon/icon.png"
-  }
+    "window": {
+        "title": "",
+        "toolbar": false,
+        "width": 816,
+        "height": 624,
+        "icon": "icon/icon.png"
+    }
 }
