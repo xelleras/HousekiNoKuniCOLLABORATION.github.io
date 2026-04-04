@@ -23,12 +23,7 @@
 (function() {
     const STORAGE_KEY = 'rpg_session_stats';
     const sessionStart = Date.now();
-    
-    /**
-     * Конвертирует секунды в читаемый формат (дни, часы, минуты, секунды)
-     * @param {number} totalSeconds - общее количество секунд
-     * @returns {string} - отформатированная строка
-     */
+
     function formatTime(seconds) {
         if (seconds === undefined || seconds === null || isNaN(seconds)) {
             return '0 сек';
@@ -47,14 +42,14 @@
         if (hours > 0) {
             parts.push(`${hours} ${declension(hours, 'час', 'часа', 'часов')}`);
         }
-        if (minutes > 0 && days === 0) { // минуты показываем только если нет дней
+        if (minutes > 0 && days === 0) { 
             parts.push(`${minutes} ${declension(minutes, 'минута', 'минуты', 'минут')}`);
         }
-        if (secs > 0 && days === 0 && hours === 0) { // секунды только если мало времени
+        if (secs > 0 && days === 0 && hours === 0) { 
             parts.push(`${secs} ${declension(secs, 'секунда', 'секунды', 'секунд')}`);
         }
         
-        // Если все части пустые (0 секунд)
+
         if (parts.length === 0) {
             return '0 секунд';
         }
@@ -63,7 +58,7 @@
     }
     
     /**
-     * Склонение слов (для 1, 2-4, 5+)
+     * Склонение слов 
      */
     function declension(number, one, two, five) {
         const n = Math.abs(number) % 100;
@@ -74,9 +69,7 @@
         return five;
     }
     
-    /**
-     * Компактный формат (для текущей сессии)
-     */
+
     function formatCompact(seconds) {
         const hours = Math.floor(seconds / 3600);
         const minutes = Math.floor((seconds % 3600) / 60);
@@ -117,7 +110,7 @@
         let html = `<span style="color:#0f0;">🎮 ТЕКУЩАЯ СЕССИЯ</span><br>`;
         html += `<span style="color:#fff; font-size:16px; font-weight:bold;">${currentFormatted}</span><br>`;
         html += `<span style="color:#888;">━━━━━━━━━━━━━━</span><br>`;
-        html += `<span style="color:#ff0;">🏆 ВСЕГО ВСЕГО:</span><br>`;
+        html += `<span style="color:#ff0;">🏆 ВСЕГО:</span><br>`;
         html += `<span style="color:#fff; font-size:14px;">${totalFormatted}</span>`;
         
         if (stats.lastSession) {
@@ -130,7 +123,7 @@
         div.innerHTML = html;
     }
     
-    // Сохраняем статистику при уходе
+
     window.addEventListener('beforeunload', function() {
         const duration = Math.round((Date.now() - sessionStart) / 1000);
         const stats = getStoredStats();
@@ -141,7 +134,6 @@
         saveStats(stats);
     });
     
-    // Обновляем отображение каждую секунду
     updateDisplay();
     setInterval(updateDisplay, 1000);
 })();
