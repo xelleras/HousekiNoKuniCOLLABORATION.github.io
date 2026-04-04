@@ -1,14 +1,81 @@
-<!DOCTYPE html> <html>     <head>         <meta charset= "UTF-8 ">         <meta name= "apple-mobile-web-app-capable " content= "yes ">         <meta name= "apple-mobile-web-app-status-bar-style " content= "black-translucent ">         <meta name= "viewport " content= "user-scalable=no ">         <link rel= "icon " href= "icon/icon.png " type= "image/png ">         <link rel= "apple-touch-icon " href= "icon/icon.png ">         <link rel= "stylesheet " type= "text/css " href= "fonts/gamefont.css ">         <title>Alpha_NET_Z(test)</title>     </head>     <body style= "background-color: black ">         <script type= "text/javascript " src= "js/libs/pixi.js "></script>         <script type= "text/javascript " src= "js/libs/pixi-tilemap.js "></script>         <script type= "text/javascript " src= "js/libs/pixi-picture.js "></script>         <script type= "text/javascript " src= "js/libs/fpsmeter.js "></script>         <script type= "text/javascript " src= "js/libs/lz-string.js "></script>         <script type= "text/javascript " src= "js/libs/iphone-inline-video.browser.js "></script>         <script type= "text/javascript " src= "js/rpg_core.js "></script>         <script type= "text/javascript " src= "js/rpg_managers.js "></script>         <script type= "text/javascript " src= "js/rpg_objects.js "></script>         <script type= "text/javascript " src= "js/rpg_scenes.js "></script>      
-  <script>
-  let sessionStart = new Date();
-  window.onload = () => {
-      let prevSession = localStorage.getItem('lastSession');
-      if (prevSession) console.log('Предыдущая сессия длилась:', prevSession);
-  };
-  window.onbeforeunload = () => {
-      let duration = Math.round((new Date() - sessionStart) / 1000);
-      localStorage.setItem('lastSession', duration + ' сек');
-      // Или отправьте через бесплатную аналитику
-  };
+<!DOCTYPE html> <html>     <head>         <meta charset= "UTF-8 ">         <meta name= "apple-mobile-web-app-capable " content= "yes ">         <meta name= "apple-mobile-web-app-status-bar-style " content= "black-translucent ">         <meta name= "viewport " content= "user-scalable=no ">         <link rel= "icon " href= "icon/icon.png " type= "image/png ">         <link rel= "apple-touch-icon " href= "icon/icon.png ">         <link rel= "stylesheet " type= "text/css " href= "fonts/gamefont.css ">         <title>Alpha_NET_Z(test)</title>     </head>     <body style= "background-color: black ">    
+  <div id="sessionStats" style="
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(0,0,0,0.7);
+    color: lime;
+    font-family: monospace;
+    font-size: 12px;
+    padding: 5px 10px;
+    border-radius: 5px;
+    z-index: 9999;
+    pointer-events: none;
+">
+    Загрузка...
+</div>
+
+<script>
+(function() {
+    // Ключ для localStorage
+    const STORAGE_KEY = 'rpg_session_stats';
+    
+    // Засекаем начало сессии
+    const sessionStart = Date.now();
+    
+    // Функция обновления отображения
+    function updateDisplay() {
+        const stats = getStoredStats();
+        const div = document.getElementById('sessionStats');
+        if (div) {
+            if (stats.lastSession) {
+                div.innerHTML = `🎮 Последняя сессия: ${stats.lastSession} сек<br>🏆 Всего сыграно: ${stats.totalTime} сек`;
+            } else {
+                div.innerHTML = `🎮 Это ваша первая сессия!`;
+            }
+        }
+    }
+    
+    // Получить сохраненную статистику
+    function getStoredStats() {
+        const defaultStats = { lastSession: null, totalTime: 0 };
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            return raw ? JSON.parse(raw) : defaultStats;
+        } catch(e) {
+            return defaultStats;
+        }
+    }
+    
+    // Сохранить статистику
+    function saveStats(stats) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(stats));
+    }
+    
+    // Обновить статистику при уходе со страницы
+    window.addEventListener('beforeunload', function() {
+        const duration = Math.round((Date.now() - sessionStart) / 1000);
+        const stats = getStoredStats();
+        
+        stats.lastSession = duration;
+        stats.totalTime = (stats.totalTime || 0) + duration;
+        
+        saveStats(stats);
+    });
+    
+    // Показываем статистику сразу при загрузке
+    updateDisplay();
+    
+    // Обновляем каждую секунду (опционально - показывает текущую длительность)
+    let interval = setInterval(function() {
+        const currentDuration = Math.round((Date.now() - sessionStart) / 1000);
+        const div = document.getElementById('sessionStats');
+        if (div && div.innerHTML.indexOf('Текущая') === -1) {
+            const stats = getStoredStats();
+            div.innerHTML = `🎮 Текущая: ${currentDuration} сек<br>🏆 Всего: ${stats.totalTime} сек`;
+        }
+    }, 1000);
+})();
 </script>
+  <script type= "text/javascript " src= "js/libs/pixi.js "></script>         <script type= "text/javascript " src= "js/libs/pixi-tilemap.js "></script>         <script type= "text/javascript " src= "js/libs/pixi-picture.js "></script>         <script type= "text/javascript " src= "js/libs/fpsmeter.js "></script>         <script type= "text/javascript " src= "js/libs/lz-string.js "></script>         <script type= "text/javascript " src= "js/libs/iphone-inline-video.browser.js "></script>         <script type= "text/javascript " src= "js/rpg_core.js "></script>         <script type= "text/javascript " src= "js/rpg_managers.js "></script>         <script type= "text/javascript " src= "js/rpg_objects.js "></script>         <script type= "text/javascript " src= "js/rpg_scenes.js "></script>      
   <script type= "text/javascript " src= "js/rpg_sprites.js "></script>         <script type= "text/javascript " src= "js/rpg_windows.js "></script>         <script type= "text/javascript " src= "js/plugins.js "></script>         <script type= "text/javascript " src= "js/main.js "></script> </body> </html> 
