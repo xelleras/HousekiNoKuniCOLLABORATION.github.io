@@ -1,6 +1,6 @@
 /*:
  * @plugindesc v1.0 Система ачивок с редактируемыми параметрами
- * @author YourName
+ * @author Xelleras
  * @help
  * ============================================================================
  * Система ачивок для RPG Maker MV
@@ -332,7 +332,7 @@
     
     Scene_Achievements.prototype.initialize = function() {
         Scene_MenuBase.prototype.initialize.call(this);
-        this._detailsWindow = null; // Добавляем переменную для окна деталей
+        this._detailsWindow = null;
     };
     
     Scene_Achievements.prototype.create = function() {
@@ -358,6 +358,7 @@
     };
     
     Scene_Achievements.prototype.showAchievementDetails = function(achievement) {
+        // Деактивируем главное окно
         this._achievementWindow.deactivate();
         
         // Создаем окно деталей
@@ -365,7 +366,6 @@
         this._detailsWindow.x = (Graphics.boxWidth - this._detailsWindow.width) / 2;
         this._detailsWindow.y = (Graphics.boxHeight - this._detailsWindow.height) / 2;
         this.addWindow(this._detailsWindow);
-        this._detailsWindow.activate();
         
         // Устанавливаем обработчик закрытия
         this._detailsWindow.setHandler('cancel', this.closeDetails.bind(this));
@@ -373,13 +373,17 @@
     
     Scene_Achievements.prototype.closeDetails = function() {
         if (this._detailsWindow) {
-            // Сначала удаляем окно из сцены
-            this.removeWindow(this._detailsWindow);
+            // Закрываем окно
+            this._detailsWindow.close();
+            // Удаляем из списка окон сцены
+            var index = this._windowLayer.children.indexOf(this._detailsWindow);
+            if (index > -1) {
+                this._windowLayer.removeChild(this._detailsWindow);
+            }
             // Очищаем ссылку
             this._detailsWindow = null;
-            // Активируем главное окно и обновляем его
+            // Активируем главное окно
             this._achievementWindow.activate();
-            this._achievementWindow.refresh();
         }
     };
     
@@ -449,7 +453,6 @@
         this.activate();
     };
     
-    // Добавляем поддержку setHandler (как в Window_Selectable)
     Window_AchievementDetails.prototype.setHandler = function(symbol, method) {
         this._handlers[symbol] = method;
     };
@@ -519,7 +522,6 @@
         }
     };
     
-    // Обработка нажатий (исправленная версия)
     Window_AchievementDetails.prototype.update = function() {
         Window_Base.prototype.update.call(this);
         
