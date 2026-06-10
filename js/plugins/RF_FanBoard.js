@@ -1,6 +1,6 @@
 /*:
- * @plugindesc Плагин для отображения галереи фан-артов v2.2.0
- * @author Xelleras
+ * @plugindesc Плагин для отображения галереи фан-артов v2.2.1
+ * @author YourName
  * @help
  * ============================================================================
  * Галерея фан-артов с перелистыванием (мобильная версия)
@@ -96,7 +96,7 @@
     var artMaxWidth = Number(parameters['ArtMaxWidth'] || 800);
     var artMaxHeight = Number(parameters['ArtMaxHeight'] || 600);
     var closeButtonSize = Number(parameters['CloseButtonSize'] || 50);
-    var closeButtonText = parameters['CloseButtonText'] || 'X - закрыть | ← → - листать | Z - открыть';
+    var closeButtonText = parameters['CloseButtonText'] || 'ESC - закрыть | ← → - листать | Enter - открыть';
     var closeButtonY = Number(parameters['CloseButtonY'] || 50);
     var textColor = parameters['TextColor'] || '#ffffff';
     var textSize = Number(parameters['TextSize'] || 18);
@@ -125,6 +125,7 @@
     var touchStartX = 0;
     var touchStartY = 0;
     var isSwiping = false;
+    var touchMoved = false;
 
     // Команда плагина
     var _Game_Interpreter_pluginCommand = Game_Interpreter.prototype.pluginCommand;
@@ -261,6 +262,33 @@
         });
     }
 
+    // Проверка попадания точки в спрайт
+    function hitTest(sprite, x, y) {
+        if (!sprite || !sprite.visible || sprite.opacity < 10) return false;
+        
+        var bounds = sprite.getBounds();
+        var localX = x - sprite.x;
+        var localY = y - sprite.y;
+        
+        // Для круглых кнопок (close button и стрелки)
+        if (sprite === closeButton) {
+            var centerX = closeButtonSize / 2;
+            var centerY = closeButtonSize / 2;
+            var distance = Math.sqrt(Math.pow(localX - centerX, 2) + Math.pow(localY - centerY, 2));
+            return distance <= closeButtonSize / 2;
+        }
+        
+        if (sprite === leftArrow || sprite === rightArrow) {
+            var centerX = arrowSize / 2;
+            var centerY = arrowSize / 2;
+            var distance = Math.sqrt(Math.pow(localX - centerX, 2) + Math.pow(localY - centerY, 2));
+            return distance <= arrowSize / 2;
+        }
+        
+        // Для прямоугольных спрайтов
+        return localX >= 0 && localX <= bounds.width && localY >= 0 && localY <= bounds.height;
+    }
+
     function showFanArtGallery() {
         if (fanArts.length === 0) {
             console.warn('No fan arts configured!');
@@ -282,7 +310,6 @@
         
         // Предзагружаем все изображения и показываем первый арт
         preloadAllImages(function() {
-            // Небольшая задержка для уверенности что все загрузилось
             setTimeout(function() {
                 showArt(currentIndex);
             }, 100);
@@ -311,24 +338,26 @@
         createNavigationArrows();
         createCloseButtonText();
         createCounter();
-        
-        // Добавляем обработчик тач-событий для свайпа
-        addSwipeHandler();
     }
 
     function createCloseButton() {
         closeButton = new Sprite();
         closeButton.bitmap = new Bitmap(closeButtonSize, closeButtonSize);
         
-        // Рисуем крестик
         var ctx = closeButton.bitmap._context;
         var padding = closeButtonSize * 0.3;
         
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+        // Фон кнопки
+        ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+        ctx.beginPath();
+        ctx.arc(closeButtonSize / 2, closeButtonSize / 2, closeButtonSize / 2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Крестик
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
         ctx.lineWidth = 3;
         ctx.lineCap = 'round';
         
-        // Рисуем X
         ctx.beginPath();
         ctx.moveTo(padding, padding);
         ctx.lineTo(closeButtonSize - padding, closeButtonSize - padding);
@@ -339,34 +368,10 @@
         ctx.lineTo(padding, closeButtonSize - padding);
         ctx.stroke();
         
-        // Фон для кнопки
-        ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
-        ctx.beginPath();
-        ctx.arc(closeButtonSize / 2, closeButtonSize / 2, closeButtonSize / 2 - 2, 0, Math.PI * 2);
-        ctx.fill();
-        
         closeButton.x = Graphics.width - closeButtonSize - 15;
         closeButton.y = 15;
         closeButton.opacity = 0;
-        closeButton.interactive = true;
-        closeButton.buttonMode = true;
-        closeButton.hitArea = new PIXI.Circle(closeButtonSize / 2, closeButtonSize / 2, closeButtonSize / 2);
-        
-        closeButton.on('pointerover', function() {
-            this.opacity = 255;
-            this.scale.set(1.1, 1.1);
-        });
-        
-        closeButton.on('pointerout', function() {
-            this.opacity = 200;
-            this.scale.set(1.0, 1.0);
-        });
-        
-        closeButton.on('pointerdown', function(event) {
-            event.stopPropagation();
-            SoundManager.playCancel();
-            clearFanArtGallery();
-        });
+        closeButton._isButton = true;
         
         SceneManager._scene.addChild(closeButton);
         navigationSprites.push(closeButton);
@@ -382,26 +387,7 @@
         leftArrow.x = 20;
         leftArrow.y = (Graphics.height - arrowSize) / 2;
         leftArrow.opacity = 0;
-        leftArrow.interactive = true;
-        leftArrow.buttonMode = true;
-        leftArrow.hitArea = new PIXI.Rectangle(0, 0, arrowSize, arrowSize);
-        
-        leftArrow.on('pointerover', function() {
-            this.opacity = 255;
-            this.scale.set(1.2, 1.2);
-        });
-        
-        leftArrow.on('pointerout', function() {
-            this.opacity = 200;
-            this.scale.set(1.0, 1.0);
-        });
-        
-        leftArrow.on('pointerdown', function(event) {
-            event.stopPropagation();
-            if (currentIndex > 0) {
-                navigateArt(-1);
-            }
-        });
+        leftArrow._isButton = true;
         
         // Правая стрелка
         rightArrow = new Sprite();
@@ -410,26 +396,7 @@
         rightArrow.x = Graphics.width - arrowSize - 20;
         rightArrow.y = (Graphics.height - arrowSize) / 2;
         rightArrow.opacity = 0;
-        rightArrow.interactive = true;
-        rightArrow.buttonMode = true;
-        rightArrow.hitArea = new PIXI.Rectangle(0, 0, arrowSize, arrowSize);
-        
-        rightArrow.on('pointerover', function() {
-            this.opacity = 255;
-            this.scale.set(1.2, 1.2);
-        });
-        
-        rightArrow.on('pointerout', function() {
-            this.opacity = 200;
-            this.scale.set(1.0, 1.0);
-        });
-        
-        rightArrow.on('pointerdown', function(event) {
-            event.stopPropagation();
-            if (currentIndex < fanArts.length - 1) {
-                navigateArt(1);
-            }
-        });
+        rightArrow._isButton = true;
         
         SceneManager._scene.addChild(leftArrow);
         SceneManager._scene.addChild(rightArrow);
@@ -445,9 +412,9 @@
         var padding = size * 0.3;
         
         // Фон для стрелки
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
         ctx.beginPath();
-        ctx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2);
+        ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
         ctx.fill();
         
         // Стрелка
@@ -516,7 +483,6 @@
     }
 
     function showArt(index) {
-        // Удаляем старый спрайт если есть
         if (artSprite) {
             SceneManager._scene.removeChild(artSprite);
             artSprite = null;
@@ -524,16 +490,12 @@
         
         var art = fanArts[index];
         
-        // Создаем спрайт
         artSprite = new Sprite();
         
-        // Загружаем изображение
         var bitmap = ImageManager.loadPicture(art.filename);
         
-        // Проверяем что изображение загружено
         if (!bitmap || !bitmap.width || !bitmap.height) {
             console.warn('Image not loaded properly: ' + art.filename);
-            // Пробуем загрузить снова через мгновение
             setTimeout(function() {
                 if (isBoardActive && currentIndex === index) {
                     showArt(index);
@@ -543,19 +505,17 @@
         }
         
         artSprite.bitmap = bitmap;
+        artSprite._isArt = true;
         
-        // Определяем размеры
         var width = art.customWidth || artMaxWidth;
         var height = art.customHeight || artMaxHeight;
         
-        // Вычисляем масштаб
         var scaleX = width / bitmap.width;
         var scaleY = height / bitmap.height;
         var scale = Math.min(scaleX, scaleY, 1);
         
         artSprite.scale.set(scale, scale);
         
-        // Центрируем спрайт
         var actualWidth = bitmap.width * scale;
         var actualHeight = bitmap.height * scale;
         
@@ -563,20 +523,9 @@
         artSprite.y = (Graphics.height - actualHeight) / 2;
         
         artSprite.opacity = 0;
-        artSprite.interactive = true;
-        artSprite.buttonMode = true;
-        
-        // Добавляем обработчики для арта
-        artSprite.on('pointerdown', function(event) {
-            event.stopPropagation();
-            if (openWebsite && fanArts[currentIndex].url) {
-                window.open(fanArts[currentIndex].url, '_blank');
-            }
-        });
         
         SceneManager._scene.addChild(artSprite);
         
-        // Анимация появления
         var targetOpacity = 255;
         var fadeIn = function() {
             if (artSprite && artSprite.opacity < targetOpacity) {
@@ -597,7 +546,6 @@
             currentIndex = newIndex;
             SoundManager.playCursor();
             
-            // Анимируем переход
             animateArtTransition(direction, function() {
                 showArt(currentIndex);
             });
@@ -637,11 +585,9 @@
     function updateArrowsVisibility() {
         if (leftArrow) {
             leftArrow.visible = currentIndex > 0;
-            leftArrow.interactive = currentIndex > 0;
         }
         if (rightArrow) {
             rightArrow.visible = currentIndex < fanArts.length - 1;
-            rightArrow.interactive = currentIndex < fanArts.length - 1;
         }
     }
 
@@ -657,62 +603,133 @@
         fadeIn();
     }
 
-    // Обработчик свайпов для мобильных устройств
-    function addSwipeHandler() {
-        var scene = SceneManager._scene;
-        
-        // Сохраняем старые обработчики
-        var oldTouchStart = scene.onTouchStart;
-        var oldTouchMove = scene.onTouchMove;
-        var oldTouchEnd = scene.onTouchEnd;
-        
-        scene.onTouchStart = function(event) {
-            if (isBoardActive) {
-                touchStartX = event.data.global.x;
-                touchStartY = event.data.global.y;
-                isSwiping = false;
+    // Перехватываем тач-события сцены
+    var _Scene_Map_onTouchStart = Scene_Map.prototype.onTouchStart;
+    Scene_Map.prototype.onTouchStart = function(event) {
+        if (isBoardActive) {
+            var x = event.data.global.x;
+            var y = event.data.global.y;
+            
+            touchStartX = x;
+            touchStartY = y;
+            touchMoved = false;
+            isSwiping = false;
+            
+            // Проверяем попадание по кнопке закрытия
+            if (closeButton && hitTest(closeButton, x, y)) {
+                closeButton.scale.set(1.2, 1.2);
+                return;
             }
-            if (oldTouchStart) oldTouchStart.call(scene, event);
-        };
-        
-        scene.onTouchMove = function(event) {
-            if (isBoardActive && touchStartX !== 0) {
-                var currentX = event.data.global.x;
-                var currentY = event.data.global.y;
-                var diffX = currentX - touchStartX;
-                var diffY = currentY - touchStartY;
-                
-                // Если горизонтальное движение больше вертикального - это свайп
-                if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
-                    isSwiping = true;
-                    event.stopPropagation();
-                }
+            
+            // Проверяем попадание по стрелкам
+            if (leftArrow && leftArrow.visible && hitTest(leftArrow, x, y)) {
+                leftArrow.scale.set(1.2, 1.2);
+                return;
             }
-            if (oldTouchMove) oldTouchMove.call(scene, event);
-        };
+            
+            if (rightArrow && rightArrow.visible && hitTest(rightArrow, x, y)) {
+                rightArrow.scale.set(1.2, 1.2);
+                return;
+            }
+            
+            return;
+        }
         
-        scene.onTouchEnd = function(event) {
-            if (isBoardActive && isSwiping) {
-                var currentX = event.data.global.x;
-                var diffX = currentX - touchStartX;
+        if (_Scene_Map_onTouchStart) {
+            _Scene_Map_onTouchStart.call(this, event);
+        }
+    };
+
+    var _Scene_Map_onTouchMove = Scene_Map.prototype.onTouchMove;
+    Scene_Map.prototype.onTouchMove = function(event) {
+        if (isBoardActive) {
+            if (touchStartX === 0 && touchStartY === 0) return;
+            
+            var x = event.data.global.x;
+            var y = event.data.global.y;
+            var diffX = x - touchStartX;
+            var diffY = y - touchStartY;
+            
+            if (Math.abs(diffX) > 10 || Math.abs(diffY) > 10) {
+                touchMoved = true;
+            }
+            
+            // Определяем, свайп это или нет
+            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
+                isSwiping = true;
+            }
+            
+            return;
+        }
+        
+        if (_Scene_Map_onTouchMove) {
+            _Scene_Map_onTouchMove.call(this, event);
+        }
+    };
+
+    var _Scene_Map_onTouchEnd = Scene_Map.prototype.onTouchEnd;
+    Scene_Map.prototype.onTouchEnd = function(event) {
+        if (isBoardActive) {
+            var x = event.data.global.x;
+            var y = event.data.global.y;
+            
+            // Сбрасываем скейл кнопок
+            if (closeButton) closeButton.scale.set(1.0, 1.0);
+            if (leftArrow) leftArrow.scale.set(1.0, 1.0);
+            if (rightArrow) rightArrow.scale.set(1.0, 1.0);
+            
+            // Обработка свайпа
+            if (isSwiping && touchMoved) {
+                var diffX = x - touchStartX;
                 
                 if (Math.abs(diffX) > swipeThreshold) {
                     if (diffX > 0 && currentIndex > 0) {
-                        // Свайп вправо - предыдущий арт
                         navigateArt(-1);
                     } else if (diffX < 0 && currentIndex < fanArts.length - 1) {
-                        // Свайп влево - следующий арт
                         navigateArt(1);
                     }
                 }
-                
-                touchStartX = 0;
-                touchStartY = 0;
-                isSwiping = false;
             }
-            if (oldTouchEnd) oldTouchEnd.call(scene, event);
-        };
-    }
+            // Обработка тапа (если не было движения)
+            else if (!touchMoved) {
+                // Проверяем кнопку закрытия
+                if (closeButton && hitTest(closeButton, x, y)) {
+                    SoundManager.playCancel();
+                    clearFanArtGallery();
+                }
+                // Проверяем левую стрелку
+                else if (leftArrow && leftArrow.visible && hitTest(leftArrow, x, y)) {
+                    if (currentIndex > 0) {
+                        navigateArt(-1);
+                    }
+                }
+                // Проверяем правую стрелку
+                else if (rightArrow && rightArrow.visible && hitTest(rightArrow, x, y)) {
+                    if (currentIndex < fanArts.length - 1) {
+                        navigateArt(1);
+                    }
+                }
+                // Проверяем арт
+                else if (artSprite && hitTest(artSprite, x, y)) {
+                    if (openWebsite && fanArts[currentIndex].url) {
+                        window.open(fanArts[currentIndex].url, '_blank');
+                    }
+                }
+            }
+            
+            // Сбрасываем
+            touchStartX = 0;
+            touchStartY = 0;
+            touchMoved = false;
+            isSwiping = false;
+            
+            return;
+        }
+        
+        if (_Scene_Map_onTouchEnd) {
+            _Scene_Map_onTouchEnd.call(this, event);
+        }
+    };
 
     function clearFanArtGallery() {
         if (!isBoardActive) return;
@@ -749,9 +766,10 @@
         touchStartX = 0;
         touchStartY = 0;
         isSwiping = false;
+        touchMoved = false;
     }
 
-    // Обработка клавиатуры
+    // Обработка клавиатуры (для ПК)
     var _Scene_Map_update = Scene_Map.prototype.update;
     Scene_Map.prototype.update = function() {
         _Scene_Map_update.call(this);
