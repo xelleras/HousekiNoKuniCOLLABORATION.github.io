@@ -1,6 +1,6 @@
 /*:
  * @plugindesc v1.0 Interaction Hint - показывает подсказку при взаимодействии
- * @author YourName
+ * @author Xelleras
  * @help
  * ============================================================================
  * Плагин показывает подсказку "Нажмите Z" или свою картинку, когда игрок
@@ -354,28 +354,32 @@
     };
     
     // Проверка, может ли игрок взаимодействовать с объектом
-    Scene_Map.prototype.checkPlayerInteraction = function() {
+    Scene_Map.prototype.checkPlayerInteraction = function () {
         var player = $gamePlayer;
         var x = player.x;
         var y = player.y;
-        
-        // Проверяем все направления
-        var directions = [[0, 0]]; // текущая позиция
-        
-        // Добавляем соседние клетки в зависимости от дистанции
-        for (var dx = -checkDistance; dx <= checkDistance; dx++) {
-            for (var dy = -checkDistance; dy <= checkDistance; dy++) {
-                if (Math.abs(dx) + Math.abs(dy) <= checkDistance) {
-                    directions.push([dx, dy]);
-                }
-            }
+        var dir = player.direction();
+
+        // Проверяем клетку, на которой стоит игрок (0,0)
+        var checkPositions = [
+            [0, 0] // текущая позиция
+        ];
+
+        // Добавляем клетку ПЕРЕД игроком (в направлении взгляда)
+        // Направления: 2=вниз, 4=влево, 6=вправо, 8=вверх
+        switch (dir) {
+            case 2: checkPositions.push([0, 1]); break; // вниз
+            case 4: checkPositions.push([-1, 0]); break; // влево
+            case 6: checkPositions.push([1, 0]); break; // вправо
+            case 8: checkPositions.push([0, -1]); break; // вверх
         }
-        
-        for (var i = 0; i < directions.length; i++) {
-            var checkX = x + directions[i][0];
-            var checkY = y + directions[i][1];
+
+        // Проверяем только эти две позиции (без радиуса)
+        for (var i = 0; i < checkPositions.length; i++) {
+            var checkX = x + checkPositions[i][0];
+            var checkY = y + checkPositions[i][1];
             var event = $gameMap.eventIdXy(checkX, checkY);
-            
+
             if (event > 0) {
                 var eventObj = $gameMap.event(event);
                 if (this.eventHasInteraction(eventObj)) {
@@ -383,7 +387,7 @@
                 }
             }
         }
-        
+
         return false;
     };
     

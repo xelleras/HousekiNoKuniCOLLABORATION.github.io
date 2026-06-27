@@ -9359,7 +9359,7 @@ window.HUIManager = function() {};
         sectionA.classList.remove("msger-none");
         sectionB.classList.add("msger-none");
         this._rChat.__isVisible = false;
-        this.showInput("Room Name...");
+        this.showInput("Название комнаты...");
         this.setInputValue($gameTemp.nLastNetworkSceneInputValue);
       } else {
         sectionA.classList.add("msger-none");
@@ -19932,7 +19932,7 @@ Scene_NetChatInput = class Scene_NetChatInput extends Scene_MenuBase {
     }
   };
   _._showNameInput = function() {
-    HUIManager.showInput("Enter your message...", ANET.PP.getChatMessagesSettings().maxlength);
+    HUIManager.showInput("Введите текст...", ANET.PP.getChatMessagesSettings().maxlength);
     HUIManager.setInputValue("");
   };
   _._hideNameInput = function() {
@@ -20158,7 +20158,7 @@ Scene_NetworkGameMenu = class Scene_NetworkGameMenu extends Scene_MenuBase {
   _._initSceneComponents = function() {
     this._createNetworkMenu(); //1
     this._createWelcomeText(); //1
-    HUIManager.showInput("Room Name...");
+    HUIManager.showInput("Название комнаты...");
     this._createServerPlayerCountText();
     this._createPlayerCountRefreshThread();
     if (ANET.PP.isShowLobbyChat()) {
@@ -21260,7 +21260,7 @@ Scene_NetworkSettings = class Scene_NetworkSettings extends Scene_MenuBase {
   //@[DEFINES]
   _ = Scene_NetworkSettings.prototype;
   _._showNameInput = function() {
-    HUIManager.showInput("Enter your name for network...");
+    HUIManager.showInput("Введите свой новый ник...");
     HUIManager.setInputValue(ANGameManager.myPlayerData().name);
   };
   _._savePlayerName = function() {
@@ -23479,7 +23479,7 @@ Window_NetworkGameMenu = class Window_NetworkGameMenu extends Window_Command {
     if (ANET.PP.isJoinRandomRoomAllowed()) {
       this.addCommand(ANET.LV("joinRandomRoom"), "joinRandRoom");
     }
-    this.addCommand(ANET.LV("Settings"), "settings");
+    this.addCommand(ANET.LV("Ввести ник"), "settings");
   }
 
 };
@@ -23816,8 +23816,8 @@ Window_NetworkRoomTypeMenu = class Window_NetworkRoomTypeMenu extends Window_Com
   }
 
   makeCommandList() {
-    this.addCommand("New Game", "newGame");
-    this.addCommand("Load Game", "continue", this.isHaveSavedGames());
+    this.addCommand("Начать", "newGame");
+    this.addCommand("Продолжить", "continue", this.isHaveSavedGames());
   }
 
   isHaveSavedGames() {
